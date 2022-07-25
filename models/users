@@ -2,17 +2,18 @@ const mongoose = require('mongoose')
 const Recipe = require('./recipes')
 
 const usersSchema = new mongoose.Schema({
-    userName: {type: String, required: true, unique: true},
+    username: {type: String, required: true, unique: true},
     password: { type: String, required: true},
     email: { 
         type: String, 
         required: true,
         unique: true,
         match:/^[a-zA-Z0-9.!#$%&'+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:.[a-zA-Z0-9-]+)$/ },
-    displayName: { type: String, required: true},
-    emailVerified: {type: Boolean,  default: false},
-    savedRecipes: {type: [String]},
-    madeRecipes: {type: [String]}
+    //displayName: { type: String, required: true},
+    emailVerification: {type: Boolean,  default: false},
+    savedRecipes: {type: [mongoose.Types.ObjectId]},
+    madeRecipes: {type: [mongoose.Types.ObjectId]},
+    posts: {type: [mongoose.Types.ObjectId]}
     },
     {collection: 'users'}
 )

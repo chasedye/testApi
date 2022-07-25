@@ -28,6 +28,7 @@ mongoose
 app.use(express.json())
 app.use(bodyParser.json())
 app.use('/user', require('./routes/users'))
+app.use('/account', require('./routes/account'))
 
 
 
