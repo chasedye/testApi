@@ -13,7 +13,8 @@ const usersSchema = new mongoose.Schema({
     emailVerification: {type: Boolean,  default: false},
     savedRecipes: {type: [mongoose.Types.ObjectId]},
     madeRecipes: {type: [mongoose.Types.ObjectId]},
-    posts: {type: [mongoose.Types.ObjectId]}
+    posts: {type: [mongoose.Types.ObjectId]},
+    name:{type: String, required: true}
     },
     {collection: 'users'}
 )
