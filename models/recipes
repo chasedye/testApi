@@ -1,0 +1,13 @@
+const mongoose = require('mongoose')
+
+const recipeSchema = new mongoose.Schema({
+    "title": String,
+    "image": String,
+    "imageType": String,
+    "savedRecipe": Boolean,
+    "madeRecipe": Boolean,
+    "rating": Number,
+    "id" : String
+})
+
+module.exports = mongoose.model('recipeSchema', recipeSchema)

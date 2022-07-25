@@ -1,0 +1,38 @@
+const express = require('express')
+const mongoose = require('mongoose')
+const { nextTick } = require('process')
+const User = require('../models/users')
+const router = express.Router()
+
+
+
+
+// delete recipe from made recipes
+router.put('/', (req, res) => {
+
+ 
+
+    
+    User.findOneAndUpdate(
+        { _id: req.body.userId },
+        { $pull: { savedRecipes: { _id: req.body.recipeId } } },
+        { new: true }
+      )
+        .then(result => console.log(result))
+        .catch(err => console.log(err));    console.log('user is ' + req.body.userId)
+    console.log('made it pt2 ')
+
+   
+    User.findById(req.body.userId)
+    .then(userFound => {
+       console.log('inside' + userFound)
+    })
+    
+    
+    
+    //res.sendStatus(200)
+})
+
+
+
+module.exports = router
