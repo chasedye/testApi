@@ -52,4 +52,25 @@ router.put("/madeRecipes", (req, res) => {
 });
 //successfully tested
 
+
+//adds a recipe to the saved recipes array of the user
+/*request format:
+  {
+    "userId": "the id of the user",
+    "recipeId": "the id of the recipe"
+  }
+
+*/
+router.post("/savedRecipes", (req, res) => {
+  //first find the recipe in our database
+
+  //if found, find the user and add recipe to user's saved recipes array
+
+  //if not found, get recipe from spoonacular
+    //create a new recipe object with the data modeled in models/recipes
+    //add new recipe to our database
+    //add its ID to the user's saved recipe array
+  
+});
+
 module.exports = router;
