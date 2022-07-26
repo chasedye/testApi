@@ -1,8 +1,8 @@
-const express = require('express')
-const mongoose = require('mongoose')
-const { nextTick } = require('process')
-const User = require('../models/users')
-const router = express.Router()
+const express = require("express");
+const mongoose = require("mongoose");
+const { nextTick } = require("process");
+const User = require("../models/users");
+const router = express.Router();
 
 // deletes the given recipe from the savedRecipes array in the given user
 /*request format:
@@ -12,27 +12,44 @@ const router = express.Router()
   }
 
 */
-router.put('/', (req, res) => {
-
+router.put("/savedRecipes", (req, res) => {
   User.findOneAndUpdate(
     { _id: req.body.userId },
-    { $pull: { savedRecipes: req.body.recipeId  },})
-    .then(result => {
-      if(result){
-        console.log(result);
-        res.status(200);
-        res.json(result);
-      }
-      else{
-        res.status(404);
-      }
-    })
-    
-})
-//successfully tested 
+    { $pull: { savedRecipes: req.body.recipeId } }
+  ).then((result) => {
+    if (result) {
+      console.log(result);
+      res.status(200);
+      res.json(result);
+    } else {
+      res.status(404);
+    }
+  });
+});
+//successfully tested
 
+// deletes the given recipe from the madeRecipes array in the given user
+/*request format:
+  {
+    "userId": "the id of the user",
+    "recipeId": "the id of the recipe"
+  }
 
+*/
+router.put("/madeRecipes", (req, res) => {
+  User.findOneAndUpdate(
+    { _id: req.body.userId },
+    { $pull: { madeRecipes: req.body.recipeId } }
+  ).then((result) => {
+    if (result) {
+      console.log(result);
+      res.status(200);
+      res.json(result);
+    } else {
+      res.status(404);
+    }
+  });
+});
+//successfully tested
 
-
-
-module.exports = router
+module.exports = router;
