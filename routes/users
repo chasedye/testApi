@@ -33,7 +33,10 @@ router.put("/savedRecipes", (req, res) => {
     }
   });
   //find recipe and reduce counter
-  Recipe.findOneandUpdate({spoonacularID: req.body.recipeId}, {$inc: { numSaved: -1}});
+  Recipe.findOneandUpdate(
+    { spoonacularID: req.body.recipeId },
+    { $inc: { numSaved: -1 } }
+  );
 });
 //successfully tested
 
@@ -59,7 +62,10 @@ router.put("/madeRecipes", (req, res) => {
     }
   });
   //find recipe and reduce counter
-  Recipe.findOneandUpdate({spoonacularID: req.body.recipeId}, {$inc: { numMade: -1}});
+  Recipe.findOneandUpdate(
+    { spoonacularID: req.body.recipeId },
+    { $inc: { numMade: -1 } }
+  );
 });
 //successfully tested
 
@@ -73,22 +79,38 @@ router.put("/madeRecipes", (req, res) => {
 */
 router.post("/savedRecipes", (req, res) => {
   //first find the recipe in our database
-  Recipe.findOneandUpdate({ spoonacularID: req.body.recipeId }, {$inc: {numSaved : 1}}).then((recipe) => {
+  Recipe.findOneAndUpdate(
+    { spoonacularID: req.body.recipeId },
+    { $inc: { numSaved: 1 } }
+  ).then((recipe) => {
     if (recipe) {
-      //if found, find the user and add recipe to user's saved recipes array
-      User.findOneAndUpdate(
-        { _id: req.body.userId },
-        { $push: { savedRecipes: recipe._id } }
-      ).then((result) => {
+      //if found,
+      //check if the user already has the recipe
+      const users = User.find({ savedRecipes: recipe._id });
+      users.findOne({ _id: req.body.userId }).then((result) => {
         if (result) {
-          User.findOne({ _id: req.body.userId }).then((result) => {
-            res.status(200);
-            res.json(result.savedRecipes);
-          });
+          //user already has the recipe, do nothing
+          console.log(`the user containing duplicate is ${result}`);
+          console.log("duplicate avoided");
+          res.status(200);
+          return res.json(result.savedRecipes);
         } else {
-          //the user does not exist in the database
-          res.status(404);
-          console.log("user was not found");
+          //find the user and add recipe to user's saved recipes array
+          User.findOneAndUpdate(
+            { _id: req.body.userId },
+            { $push: { savedRecipes: recipe._id } }
+          ).then((result) => {
+            if (result) {
+              User.findOne({ _id: req.body.userId }).then((result) => {
+                res.status(200);
+                res.json(result.savedRecipes);
+              });
+            } else {
+              //the user does not exist in the database
+              res.status(404);
+              console.log("user was not found");
+            }
+          });
         }
       });
     } else {
@@ -162,7 +184,7 @@ router.post("/savedRecipes", (req, res) => {
   });
 });
 
-//ADD MADE RECIPE -- NOT READY!!!!
+//ADD MADE RECIPE
 /*request format:
   {
     "userId": "the id of the user",
@@ -172,22 +194,38 @@ router.post("/savedRecipes", (req, res) => {
 */
 router.post("/madeRecipes", (req, res) => {
   //first find the recipe in our database
-  Recipe.findOneAndUpdate({ spoonacularID: req.body.recipeId }, {$inc : { numMade: 1}}).then((recipe) => {
-    if (recipe) {      
-      //if found, find the user and add recipe to user's saved recipes array
-      User.findOneAndUpdate(
-        { _id: req.body.userId },
-        { $push: { madeRecipes: recipe._id } }
-      ).then((result) => {
+  Recipe.findOneAndUpdate(
+    { spoonacularID: req.body.recipeId },
+    { $inc: { numMade: 1 } }
+  ).then((recipe) => {
+    if (recipe) {
+      //if found,
+      //check if the user already has the recipe
+      const users = User.find({ madeRecipes: recipe._id });
+      users.findOne({ _id: req.body.userId }).then((result) => {
         if (result) {
-          User.findOne({ _id: req.body.userId }).then((result) => {
-            res.status(200);
-            res.json(result.madeRecipes);
-          });
+          //user already has the recipe, do nothing
+          console.log(`the user containing duplicate is ${result}`);
+          console.log("duplicate avoided");
+          res.status(200);
+          return res.json(result.madeRecipes);
         } else {
-          //the user does not exist in the database
-          res.status(404);
-          console.log("user was not found");
+          //find the user and add recipe to user's saved recipes array
+          User.findOneAndUpdate(
+            { _id: req.body.userId },
+            { $push: { madeRecipes: recipe._id } }
+          ).then((result) => {
+            if (result) {
+              User.findOne({ _id: req.body.userId }).then((result) => {
+                res.status(200);
+                res.json(result.madeRecipes);
+              });
+            } else {
+              //the user does not exist in the database
+              res.status(404);
+              console.log("user was not found");
+            }
+          });
         }
       });
     } else {
@@ -209,7 +247,8 @@ router.post("/madeRecipes", (req, res) => {
               result.body.extendedIngredients[i].name +
               '", ';
           }
-          ingredients = ingredients + '"' + result.body.extendedIngredients[i].name + '"]}';
+          ingredients =
+            ingredients + '"' + result.body.extendedIngredients[i].name + '"]}';
 
           const ingredientsJson = JSON.parse(ingredients);
 
