@@ -32,6 +32,8 @@ router.put("/savedRecipes", (req, res) => {
       res.status(404);
     }
   });
+  //find recipe and reduce counter
+  Recipe.findOneandUpdate({spoonacularID: req.body.recipeId}, {$inc: { numSaved: -1}});
 });
 //successfully tested
 
@@ -56,6 +58,8 @@ router.put("/madeRecipes", (req, res) => {
       res.status(404);
     }
   });
+  //find recipe and reduce counter
+  Recipe.findOneandUpdate({spoonacularID: req.body.recipeId}, {$inc: { numMade: -1}});
 });
 //successfully tested
 
@@ -69,9 +73,8 @@ router.put("/madeRecipes", (req, res) => {
 */
 router.post("/savedRecipes", (req, res) => {
   //first find the recipe in our database
-  Recipe.findOne({ spoonacularID: req.body.recipeId }).then((recipe) => {
+  Recipe.findOneandUpdate({ spoonacularID: req.body.recipeId }, {$inc: {numSaved : 1}}).then((recipe) => {
     if (recipe) {
-      console.log(`the recipe found is ${recipe}`);
       //if found, find the user and add recipe to user's saved recipes array
       User.findOneAndUpdate(
         { _id: req.body.userId },
@@ -167,20 +170,19 @@ router.post("/savedRecipes", (req, res) => {
   }
 
 */
-router.post("/savedRecipes", (req, res) => {
+router.post("/madeRecipes", (req, res) => {
   //first find the recipe in our database
-  Recipe.findOne({ spoonacularID: req.body.recipeId }).then((recipe) => {
-    if (recipe) {
-      console.log(`the recipe found is ${recipe}`);
+  Recipe.findOneAndUpdate({ spoonacularID: req.body.recipeId }, {$inc : { numMade: 1}}).then((recipe) => {
+    if (recipe) {      
       //if found, find the user and add recipe to user's saved recipes array
       User.findOneAndUpdate(
         { _id: req.body.userId },
-        { $push: { savedRecipes: recipe._id } }
+        { $push: { madeRecipes: recipe._id } }
       ).then((result) => {
         if (result) {
           User.findOne({ _id: req.body.userId }).then((result) => {
             res.status(200);
-            res.json(result.savedRecipes);
+            res.json(result.madeRecipes);
           });
         } else {
           //the user does not exist in the database
@@ -207,8 +209,7 @@ router.post("/savedRecipes", (req, res) => {
               result.body.extendedIngredients[i].name +
               '", ';
           }
-          ingredients =
-            ingredients + '"' + result.body.extendedIngredients[i].name + '"]}';
+          ingredients = ingredients + '"' + result.body.extendedIngredients[i].name + '"]}';
 
           const ingredientsJson = JSON.parse(ingredients);
 
@@ -221,9 +222,9 @@ router.post("/savedRecipes", (req, res) => {
             instructions: result.body.instructions,
             recipePhoto: result.body.image,
             ingredients: array,
-            numMade: 0,
+            numMade: 1,
             numRatings: 0,
-            numSaved: 1,
+            numSaved: 0,
             rating: result.body.spoonacularScore,
           });
           console.log(`the recipe created is: ${newRecipe}`);
@@ -236,12 +237,12 @@ router.post("/savedRecipes", (req, res) => {
             //add its ID to the user's saved recipe array
             User.findOneAndUpdate(
               { _id: req.body.userId },
-              { $push: { savedRecipes: recipeId } }
+              { $push: { madeRecipes: recipeId } }
             ).then((result) => {
               if (result) {
                 User.findOne({ _id: req.body.userId }).then((result) => {
                   res.status(200);
-                  res.json(result.savedRecipes);
+                  res.json(result.madeRecipes);
                 });
               } else {
                 //the user does not exist in the database
