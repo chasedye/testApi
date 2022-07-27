@@ -8,7 +8,7 @@ const router = express.Router();
 
 const apiKey = "0a6685e6362045c38a6ca038dd3431c8";
 
-// deletes the given recipe from the savedRecipes array in the given user
+//DELETE SAVED RECIPE
 /*request format:
   {
     "userId": "the id of the user",
@@ -35,7 +35,7 @@ router.put("/savedRecipes", (req, res) => {
 });
 //successfully tested
 
-// deletes the given recipe from the madeRecipes array in the given user
+//DELETE MADE RECIPE
 /*request format:
   {
     "userId": "the id of the user",
@@ -59,7 +59,107 @@ router.put("/madeRecipes", (req, res) => {
 });
 //successfully tested
 
-//adds a recipe to the saved recipes array of the user
+//ADD SAVED RECIPE
+/*request format:
+  {
+    "userId": "the id of the user",
+    "recipeId": "spoonacularID, number"
+  }
+
+*/
+router.post("/savedRecipes", (req, res) => {
+  //first find the recipe in our database
+  Recipe.findOne({ spoonacularID: req.body.recipeId }).then((recipe) => {
+    if (recipe) {
+      console.log(`the recipe found is ${recipe}`);
+      //if found, find the user and add recipe to user's saved recipes array
+      User.findOneAndUpdate(
+        { _id: req.body.userId },
+        { $push: { savedRecipes: recipe._id } }
+      ).then((result) => {
+        if (result) {
+          User.findOne({ _id: req.body.userId }).then((result) => {
+            res.status(200);
+            res.json(result.savedRecipes);
+          });
+        } else {
+          //the user does not exist in the database
+          res.status(404);
+          console.log("user was not found");
+        }
+      });
+    } else {
+      //if not found, get recipe from spoonacular
+      let serviceURL = `https://api.spoonacular.com/recipes/${req.body.recipeId}/information?apiKey=${apiKey}`;
+      console.log(`the url is ${serviceURL}`);
+      unirest.get(serviceURL).end((result) => {
+        if (result) {
+          //create a valid string array for ingredients
+          let ingredients = '{ "array" : [';
+          for (
+            var i = 0;
+            i < Object.keys(result.body.extendedIngredients).length - 1;
+            i++
+          ) {
+            ingredients =
+              ingredients +
+              '"' +
+              result.body.extendedIngredients[i].name +
+              '", ';
+          }
+          ingredients =
+            ingredients + '"' + result.body.extendedIngredients[i].name + '"]}';
+
+          const ingredientsJson = JSON.parse(ingredients);
+
+          const array = ingredientsJson.array;
+
+          //create a new recipe object with the data modeled in models/recipes
+          var newRecipe = new Recipe({
+            title: result.body.title,
+            spoonacularID: result.body.id,
+            instructions: result.body.instructions,
+            recipePhoto: result.body.image,
+            ingredients: array,
+            numMade: 0,
+            numRatings: 0,
+            numSaved: 1,
+            rating: result.body.spoonacularScore,
+          });
+          console.log(`the recipe created is: ${newRecipe}`);
+          //add new recipe to our database
+          newRecipe.save(function (err, result) {
+            if (err) return console.error(err);
+            //console.log(result.title + " is saved to the recipes collection.");
+            const recipeId = result._id;
+
+            //add its ID to the user's saved recipe array
+            User.findOneAndUpdate(
+              { _id: req.body.userId },
+              { $push: { savedRecipes: recipeId } }
+            ).then((result) => {
+              if (result) {
+                User.findOne({ _id: req.body.userId }).then((result) => {
+                  res.status(200);
+                  res.json(result.savedRecipes);
+                });
+              } else {
+                //the user does not exist in the database
+                res.status(404);
+                console.log("user was not found");
+              }
+            });
+          });
+        } else {
+          res.send("spoonacular search failed");
+          res.status(404);
+        }
+      });
+    }
+  });
+});
+
+//ADD MADE RECIPE -- NOT READY!!!!
 /*request format:
   {
     "userId": "the id of the user",

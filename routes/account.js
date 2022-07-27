@@ -4,7 +4,7 @@ const router = express.Router();
 const User = require("../models/users");
 const Recipes = require("../models/recipes");
 
-//display array of saved recipes
+//DISPLAY SAVED RECIPES
 router.get("/:id/savedRecipes", (req, res, next) => {
   const reqId = mongoose.Types.ObjectId(req.params.id);
 
@@ -32,7 +32,7 @@ router.get("/:id/savedRecipes", (req, res, next) => {
     });
 });
 
-//display array of made recipes
+//DISPLAY MADE RECIPES
 router.get("/:id/madeRecipes", (req, res, next) => {
   const reqId = mongoose.Types.ObjectId(req.params.id);
 
