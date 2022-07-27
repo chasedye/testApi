@@ -2,7 +2,11 @@ const express = require("express");
 const mongoose = require("mongoose");
 const { nextTick } = require("process");
 const User = require("../models/users");
+const Recipe = require("../models/recipes");
+const unirest = require("unirest");
 const router = express.Router();
+
+const apiKey = "0a6685e6362045c38a6ca038dd3431c8";
 
 // deletes the given recipe from the savedRecipes array in the given user
 /*request format:
@@ -13,11 +17,14 @@ const router = express.Router();
 
 */
 router.put("/savedRecipes", (req, res) => {
+  //find the user with his/her id
   User.findOneAndUpdate(
     { _id: req.body.userId },
+    //pull (delete), the recipe from the savedRecipes array with the given recipe id
     { $pull: { savedRecipes: req.body.recipeId } }
   ).then((result) => {
     if (result) {
+      //return the new updated array of recipes
       console.log(result);
       res.status(200);
       res.json(result);
@@ -52,25 +59,102 @@ router.put("/madeRecipes", (req, res) => {
 });
 //successfully tested
 
-
 //adds a recipe to the saved recipes array of the user
 /*request format:
   {
     "userId": "the id of the user",
-    "recipeId": "the id of the recipe"
+    "recipeId": "spoonacularID, number"
   }
 
 */
 router.post("/savedRecipes", (req, res) => {
   //first find the recipe in our database
+  Recipe.findOne({ spoonacularID: req.body.recipeId }).then((recipe) => {
+    if (recipe) {
+      console.log(`the recipe found is ${recipe}`);
+      //if found, find the user and add recipe to user's saved recipes array
+      User.findOneAndUpdate(
+        { _id: req.body.userId },
+        { $push: { savedRecipes: recipe._id } }
+      ).then((result) => {
+        if (result) {
+          User.findOne({ _id: req.body.userId }).then((result) => {
+            res.status(200);
+            res.json(result.savedRecipes);
+          });
+        } else {
+          //the user does not exist in the database
+          res.status(404);
+          console.log("user was not found");
+        }
+      });
+    } else {
+      //if not found, get recipe from spoonacular
+      let serviceURL = `https://api.spoonacular.com/recipes/${req.body.recipeId}/information?apiKey=${apiKey}`;
+      console.log(`the url is ${serviceURL}`);
+      unirest.get(serviceURL).end((result) => {
+        if (result) {
+          //create a valid string array for ingredients
+          let ingredients = '{ "array" : [';
+          for (
+            var i = 0;
+            i < Object.keys(result.body.extendedIngredients).length - 1;
+            i++
+          ) {
+            ingredients =
+              ingredients +
+              '"' +
+              result.body.extendedIngredients[i].name +
+              '", ';
+          }
+          ingredients =
+            ingredients + '"' + result.body.extendedIngredients[i].name + '"]}';
 
-  //if found, find the user and add recipe to user's saved recipes array
+          const ingredientsJson = JSON.parse(ingredients);
 
-  //if not found, get recipe from spoonacular
-    //create a new recipe object with the data modeled in models/recipes
-    //add new recipe to our database
-    //add its ID to the user's saved recipe array
-  
+          const array = ingredientsJson.array;
+
+          //create a new recipe object with the data modeled in models/recipes
+          var newRecipe = new Recipe({
+            title: result.body.title,
+            spoonacularID: result.body.id,
+            instructions: result.body.instructions,
+            recipePhoto: result.body.image,
+            ingredients: array,
+            numMade: 0,
+            numRatings: 0,
+            numSaved: 1,
+            rating: result.body.spoonacularScore,
+          });
+          console.log(`the recipe created is: ${newRecipe}`);
+          //add new recipe to our database
+          newRecipe.save(function (err, result) {
+            if (err) return console.error(err);
+            //console.log(result.title + " is saved to the recipes collection.");
+            const recipeId = result._id;
+
+            //add its ID to the user's saved recipe array
+            User.findOneAndUpdate(
+              { _id: req.body.userId },
+              { $push: { savedRecipes: recipeId } }
+            ).then((result) => {
+              if (result) {
+                res.status(200);
+                res.json(result.savedRecipes);
+              } else {
+                //the user does not exist in the database
+                res.status(404);
+                console.log("user was not found");
+              }
+            });
+          });
+        } else {
+          res.send("spoonacular search failed");
+          res.status(404);
+        }
+      });
+    }
+  });
 });
 
 module.exports = router;
